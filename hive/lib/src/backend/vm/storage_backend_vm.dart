@@ -218,6 +218,10 @@ class StorageBackendVm extends StorageBackend {
     if (_compactionScheduled) return Future.value();
     _compactionScheduled = true;
 
+    // Clear the flag when this attempt finishes. The `finally` around the
+    // rename does not run when opening the temporary file, reading a frame,
+    // or writing it fails, and a stuck flag makes every later compact()
+    // return without rewriting the box.
     return _sync.syncReadWrite(() async {
       await readRaf.setPosition(0);
       final reader = BufferedFileReader(readRaf);
@@ -266,7 +270,6 @@ class StorageBackendVm extends StorageBackend {
         rethrow;
       } finally {
         await open();
-        _compactionScheduled = false;
       }
 
       var offset = 0;
@@ -275,6 +278,8 @@ class StorageBackendVm extends StorageBackend {
         frame.offset = offset;
         offset += frame.requireLength;
       }
+    }).whenComplete(() {
+      _compactionScheduled = false;
     });
   }
 

@@ -1,3 +1,7 @@
+## Unreleased
+
+- Fixes compaction stopping until the box is reopened when an attempt fails before the temporary file is renamed
+
 ## 2.22.0
 
 - Adds `Hive.flush()` and `IsolatedHive.flush()` to flush every open box
